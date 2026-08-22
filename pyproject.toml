@@ -53,6 +53,7 @@ dependencies = [
     "mypy-extensions==1.1.0 ; python_full_version >= '3.8'",
     "narwhals==1.46.0 ; python_full_version >= '3.9'",
     "networkx==3.5 ; python_full_version >= '3.11'",
+    "nepali-converter==0.1.1 ; python_full_version >= '3.11'",
     "numpy==2.3.1 ; python_full_version < '3.13'",
     "orjson==3.10.18 ; platform_python_implementation != 'PyPy'",
     "packaging==24.2 ; python_full_version >= '3.8'",
@@ -63,6 +64,7 @@ dependencies = [
     "pyarrow==20.0.0 ; python_full_version >= '3.9'",
     "pydantic==2.11.7 ; python_full_version >= '3.9'",
     "pydantic-core==2.33.2 ; python_full_version >= '3.9'",
+    "pymupdf==1.28.2 ; python_full_version >= '3.8'",
     "pydantic-settings==2.10.1 ; python_full_version >= '3.9'",
     "pydeck==0.9.1 ; python_full_version >= '3.8'",
     "pypdf==5.7.0 ; python_full_version >= '3.8'",
@@ -101,4 +103,5 @@ dependencies = [
     "urllib3==2.5.0 ; python_full_version >= '3.9'",
     "yarl==1.20.1 ; python_full_version >= '3.9'",
     "zstandard==0.23.0 ; python_full_version >= '3.8'",
+    "langchain-openai==0.3.12",
 ]

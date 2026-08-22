@@ -1,0 +1,46 @@
+# secrets
+google_credentials.json
+google_tokens.json
+google_api_key.json
+mistral_api_key.json
+fal_api_key.json
+hf_api_key.json
+.env
+gdrive_credentials.json
+gdrive_token.json
+google_drive_token.json
+*gdrive*token*.json
+*.pem
+
+# logs
+*.log
+*.log.err
+*.err.log
+*.out.log
+
+# large data / pdfs
+data/*.pdf
+nepal_textbooks/
+textbooks_md/
+*.pdf
+
+# local tooling
+.kilo/
+.opencode/
+opencode.json
+frontend-dev.err.log
+node_modules/
+frontend/node_modules/
+frontend/dist/
+
+# python
+__pycache__/
+*.pyc
+.venv/
+chapter_cache/
+vectorstore/
+slide_images/
+.vercel
+
+# Local Netlify folder
+.netlify

@@ -1,0 +1,30 @@
+app = "medical-chatbot-refactored"
+primary_region = "iad"
+
+[build]
+  dockerfile = "Dockerfile"
+
+[http_service]
+  internal_port = 8000
+  force_https = true
+  auto_stop_machines = false
+  auto_start_machines = true
+  min_machines_running = 1
+  processes = ["app"]
+
+[vm]
+  memory = "2gb"
+  cpu_kind = "shared"
+  cpus = 2
+
+[env]
+  PYTHONUNBUFFERED = "1"
+  PYTHONIOENCODING = "utf-8"
+
+# Increase timeout for long-running generations
+[services.http_checks]
+  interval = "30s"
+  timeout = "300s"
+  grace_period = "60s"
+  method = "GET"
+  path = "/api/health"

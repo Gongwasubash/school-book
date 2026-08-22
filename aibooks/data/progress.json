@@ -1,0 +1,26 @@
+{
+  "topics": [
+    "1|c1_t1",
+    "10|c10_1011223824717313446_1226905792745527269",
+    "Class 2 Nepali.pdf — म र मेरो परिवार (pp.5-6)",
+    "Class 7 Nepali.pdf — मेरो देश (pp.1-5)",
+    "Class 10 Science.pdf — चाप (pp.171-200)",
+    "Class 8 Social Studies Population.pdf — सामाजिक अध्ययन र (pp.1-1)"
+  ],
+  "cards": 5,
+  "mcq_answered": 16,
+  "mcq_correct": 12,
+  "quizzes": [
+    {
+      "score": 2,
+      "total": 2,
+      "ts": "2026-08-17"
+    }
+  ],
+  "projects": [],
+  "days": [
+    "2026-08-17",
+    "2026-08-18",
+    "2026-08-19"
+  ]
+}

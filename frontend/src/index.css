@@ -1,0 +1,40 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  font-family: 'Segoe UI', 'Noto Sans', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* range slider accent */
+input[type='range'].range-accent {
+  accent-color: #ff7a18;
+}
+
+/* MCQ question slide transitions */
+@keyframes mcq-slide-in-right {
+  from { opacity: 0; transform: translateX(24px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+@keyframes mcq-slide-in-left {
+  from { opacity: 0; transform: translateX(-24px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+@keyframes mcq-pop {
+  0% { opacity: 0; transform: scale(0.96); }
+  100% { opacity: 1; transform: scale(1); }
+}
+.mcq-enter-right { animation: mcq-slide-in-right 0.28s ease-out; }
+.mcq-enter-left { animation: mcq-slide-in-left 0.28s ease-out; }
+.mcq-pop { animation: mcq-pop 0.2s ease-out; }
+
+/* indeterminate progress bar */
+@keyframes progress-slide {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(400%); }
+}
+
+/* smooth expand/collapse for explanation drawer */
+.mcq-expand { max-height: 0; overflow: hidden; opacity: 0; transition: max-height 0.3s ease, opacity 0.3s ease, margin 0.3s ease; }
+.mcq-expand-open { max-height: 400px; overflow: hidden; opacity: 1; transition: max-height 0.3s ease, opacity 0.3s ease, margin 0.3s ease; }

@@ -1,0 +1,56 @@
+# Large directories to exclude
+.venv/
+__pycache__/
+node_modules/
+.git/
+.opencode/
+.kilo/
+nepal_textbooks/
+textbooks_md/
+data/
+vectorstore/
+chapter_cache/
+slide_images/
+deploy/
+
+# Python artifacts
+*.pyc
+*.pyo
+
+# API keys / secrets (should be set as env vars)
+mistral_api_key.json
+google_api_key.json
+google_credentials.json
+google_tokens.json
+fal_api_key.json
+hf_api_key.json
+gdrive_credentials.json
+gdrive_token.json
+google_drive_token.json
+
+# Logs
+*.log
+*.err
+
+# PDFs
+*.pdf
+
+# Other
+.env
+sample.env
+pyproject.toml
+uv.lock
+create_memory_for_llm.py
+connect_memory_with_llm.py
+batch_slides.py
+ingest_folder.py
+medibot.py
+schoolbook.py
+generate_textbook_md.py
+upload_to_gdrive.py
+upload_md_to_supabase.py
+fix_lesson.py
+fix_indent.py
+fix_it.py
+check_indent.py
+nepali_font_loader.py
