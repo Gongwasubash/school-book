@@ -71,7 +71,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-PROVIDERS = ["Groq (openai/gpt-oss-20b)", "OpenCode Zen (minimax-m2.5-free, kimi-k2.5-free)", "Mistral (free)"]
+PROVIDERS = ["OpenCode Zen free (muse-spark, big-pickle, ling, mimo, nemotron)", "Groq (openai/gpt-oss-20b)", "Mistral (free)"]
 
 _kb: Dict[str, Any] = {
     "built": False,
@@ -797,11 +797,12 @@ async def _stream_llm(messages, system_prompt: str, done_key: str = "done"):
     opencode_key = os.environ.get("OPENCODE_API_KEY", "")
 
     providers = []
+    if opencode_key:
+        # Free OpenCode Zen models (same as second brain app)
+        for m in ["muse-spark", "big-pickle", "ling", "mimo", "nemotron", "nemotron-2"]:
+            providers.append(("https://opencode.ai/zen/v1/chat/completions", opencode_key, m))
     if groq_key:
         providers.append(("https://api.groq.com/openai/v1/chat/completions", groq_key, "openai/gpt-oss-20b"))
-    if opencode_key:
-        providers.append(("https://opencode.ai/zen/v1/chat/completions", opencode_key, "minimax-m2.5-free"))
-        providers.append(("https://opencode.ai/zen/v1/chat/completions", opencode_key, "kimi-k2.5-free"))
     if mistral_key:
         providers.append(("https://api.mistral.ai/v1/chat/completions", mistral_key, "mistral-large-latest"))
 
@@ -893,11 +894,9 @@ async def _llm_complete(prompt: str, system: str, provider: str = "") -> str:
     opencode_key = os.environ.get("OPENCODE_API_KEY", "")
 
     providers = []
-    if groq_key:
-        providers.append(("https://api.groq.com/openai/v1/chat/completions", groq_key, "openai/gpt-oss-20b"))
     if opencode_key:
-        providers.append(("https://opencode.ai/zen/v1/chat/completions", opencode_key, "minimax-m2.5-free"))
-        providers.append(("https://opencode.ai/zen/v1/chat/completions", opencode_key, "kimi-k2.5-free"))
+        for m in ["muse-spark", "big-pickle", "ling", "mimo", "nemotron", "nemotron-2"]:
+            providers.append(("https://opencode.ai/zen/v1/chat/completions", opencode_key, m))
     if "mistral" in provider.lower() and mistral_key:
         providers.append(("https://api.mistral.ai/v1/chat/completions", mistral_key, "mistral-large-latest"))
         if groq_key:
