@@ -71,7 +71,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-PROVIDERS = ["Groq (openai/gpt-oss-20b)", "Mistral (free)"]
+PROVIDERS = ["OpenAI (gpt-4o-mini)", "Groq (openai/gpt-oss-20b)", "Mistral (free)"]
 
 _kb: Dict[str, Any] = {
     "built": False,
@@ -343,9 +343,21 @@ def _try_parse_json(result: str):
         raise
 
 
+def _detect_language(text: str) -> str:
+    """Detect if content is Nepali (Devanagari) or English."""
+    sample = text[:3000]
+    devanagari_count = sum(1 for c in sample if '\u0900' <= c <= '\u097f')
+    latin_count = sum(1 for c in sample if 'a' <= c.lower() <= 'z')
+    total = devanagari_count + latin_count
+    if total == 0:
+        return "en"
+    devanagari_ratio = devanagari_count / total
+    return "ne" if devanagari_ratio > 0.3 else "en"
+
+
 async def _generate_from_text(type_: str, context: str, label: str, provider: str) -> dict:
-    devanagari_count = sum(1 for c in context[:2000] if '\u0900' <= c <= '\u097f')
-    lang_hint = " Respond in Nepali (Devanagari script). Match the language of the source content." if devanagari_count > 20 else ""
+    lang = _detect_language(context)
+    lang_hint = " Respond in Nepali (Devanagari script). Match the language of the source content." if lang == "ne" else " Respond in English. Match the language of the source content."
     schemas = {
         "MCQ": '{"multiple_choice_questions":[{"question":"...","options":["A","B","C","D"],"correct_answer":"A"}]}',
         "Summary": '{"overview":"...","concepts":["..."],"takeaways":["..."]}',
@@ -359,7 +371,7 @@ async def _generate_from_text(type_: str, context: str, label: str, provider: st
         "Fun Facts": '{"facts":["..."]}',
         "Group Activity": '{"activity":{"title":"...","description":"...","steps":["..."]}}',
         "Project Work": '{"project":{"title":"...","objective":"...","activities":["..."]}}',
-        "Mind Map": '{"center":"...","branches":["..."]}',
+        "Mind Map": '{"root":{"id":"root-1","title":"...","summary":"...","branches":[{"id":"branch-1","label":"...","summary":"...","children":[{"id":"sub-1-1","label":"...","details":"...","sourceQuote":"..."}]}]}}',
     }
     schema_hint = schemas.get(type_, "")
     prompt = (
@@ -375,8 +387,8 @@ async def _generate_from_text(type_: str, context: str, label: str, provider: st
 
 
 async def _stream_from_text(type_: str, context: str, label: str, provider: str, exclude: List[str] = None):
-    devanagari_count = sum(1 for c in context[:2000] if '\u0900' <= c <= '\u097f')
-    lang_hint = " Respond in Nepali (Devanagari script). Match the language of the source content." if devanagari_count > 20 else ""
+    lang = _detect_language(context)
+    lang_hint = " Respond in Nepali (Devanagari script). Match the language of the source content." if lang == "ne" else " Respond in English. Match the language of the source content."
     exclude_hint = ""
     if exclude:
         exclude_list = "\n".join(f"- {item[:80]}" for item in exclude[:30])
@@ -394,7 +406,14 @@ async def _stream_from_text(type_: str, context: str, label: str, provider: str,
         "Fun Facts": '{"facts":["..."]}',
         "Group Activity": '{"activity":{"title":"...","description":"...","steps":["..."]}}',
         "Project Work": '{"project":{"title":"...","objective":"...","activities":["..."]}}',
-        "Mind Map": '{"center":"...","branches":["..."]}',
+        "Mind Map": '{"root":{"id":"root-1","title":"...","summary":"...","branches":[{"id":"branch-1","label":"...","summary":"...","children":[{"id":"sub-1-1","label":"...","details":"...","sourceQuote":"..."}]}]}}',
+        "Lesson Plan": '{"lesson_plan":{"title":"...","grade_level":"...","subject":"...","duration":"45 minutes","learning_objectives":["..."],"materials":["..."],"previous_knowledge":"...","phases":[{"name":"Warm-up / Introduction","time":"10 min","teacher_activity":"...","student_activity":"..."},{"name":"Presentation","time":"15 min","teacher_activity":"...","student_activity":"..."},{"name":"Guided Practice","time":"10 min","teacher_activity":"...","student_activity":"..."},{"name":"Assessment / Evaluation","time":"5 min","teacher_activity":"...","student_activity":"..."},{"name":"Homework / Closure","time":"5 min","teacher_activity":"...","student_activity":"..."}],"differentiation":{"struggling_students":"...","advanced_students":"..."}}}',
+        "Teaching Notes": '{"notes":{"chapter":"...","key_points":["..."],"common_misconceptions":[{"misconception":"...","correction":"..."}],"teaching_tips":["..."],"difficult_topics":["..."],"board_work_suggestions":["..."]}}',
+        "Classroom Activity": '{"activity_plan":{"title":"...","objective":"...","duration":"30 minutes","group_size":"...","materials_needed":["..."],"setup_instructions":["..."],"steps":["..."],"debrief_questions":["..."]}}',
+        "Assignment": '{"assignment":{"title":"...","instructions":"...","total_marks":20,"due_date":"...","questions":[{"q":"...","marks":5}]}}',
+        "Quiz": '{"quiz":{"title":"...","duration":"20 minutes","total_marks":20,"questions":[{"q":"...","options":["A","B","C","D"],"answer":"A","marks":2}]}}',
+        "Discussion Questions": '{"discussion":{"topic":"...","questions":[{"q":"...","hint":"..."}]}}',
+        "Assessment Rubric": '{"rubric":{"task":"...","criteria":[{"criterion":"...","excellent":"...","good":"...","satisfactory":"...","needs_improvement":"...","weight":"25%"}]}}',
     }
     schema_hint = schemas.get(type_, "")
     min_counts = {
@@ -410,7 +429,14 @@ async def _stream_from_text(type_: str, context: str, label: str, provider: str,
         "Fun Facts": "at least 6 fun facts",
         "Group Activity": "an activity with at least 5 steps",
         "Project Work": "a project with at least 5 activities",
-        "Mind Map": "a center topic with at least 8 branches",
+        "Mind Map": "a hierarchical tree with 3-5 main branches, each with 2-4 sub-nodes containing details and source quotes",
+        "Lesson Plan": "a complete lesson plan with at least 3 learning objectives and all 5 teaching phases (Warm-up, Presentation, Guided Practice, Assessment, Homework) with detailed teacher and student activities for each phase",
+        "Teaching Notes": "at least 6 key points, at least 3 common misconceptions with corrections, at least 4 teaching tips, at least 3 difficult topics and at least 3 board work suggestions",
+        "Classroom Activity": "a complete activity plan with objective, materials, setup instructions, at least 6 steps and at least 3 debrief questions",
+        "Assignment": "an assignment with clear instructions and at least 8 questions with marks",
+        "Quiz": "a quiz with at least 10 questions each having 4 options, an answer and marks",
+        "Discussion Questions": "at least 8 discussion questions each with a hint for the teacher",
+        "Assessment Rubric": "a rubric with at least 5 criteria each rated across excellent, good, satisfactory and needs improvement levels",
     }
     min_hint = min_counts.get(type_, "")
     prompt = (
@@ -429,8 +455,6 @@ async def _stream_from_text(type_: str, context: str, label: str, provider: str,
 
 @app.post("/api/resource")
 async def make_resource(req: ResourceReq):
-    if req.type in TEACHER_RESOURCES:
-        return _teacher_resource(req.type, _kb["label"] or "Selected chapters")
     if req.type == "Progress":
         return {"insight": "No progress data in serverless mode."}
     
@@ -450,13 +474,6 @@ async def make_resource(req: ResourceReq):
 
 @app.post("/api/resource/stream")
 async def resource_stream(req: ResourceReq):
-    if req.type in TEACHER_RESOURCES:
-        payload = _teacher_resource(req.type, _kb["label"] or "Selected chapters")
-        return StreamingResponse(
-            _yield_complete(payload),
-            media_type="text/event-stream",
-            headers={"Cache-Control": "no-cache", "Connection": "keep-alive", "X-Accel-Buffering": "no"},
-        )
     if req.type == "Progress":
         payload = {"insight": "No progress data in serverless mode."}
         return StreamingResponse(
@@ -564,8 +581,8 @@ async def exercise(req: ExerciseReq):
     
     lang_hint = f" in {req.language}" if req.language else ""
     if not lang_hint:
-        devanagari_count = sum(1 for c in context[:2000] if '\u0900' <= c <= '\u097f')
-        lang_hint = " Respond in Nepali (Devanagari script)." if devanagari_count > 20 else ""
+        lang = _detect_language(context)
+        lang_hint = " Respond in Nepali (Devanagari script)." if lang == "ne" else " Respond in English."
     exclude_hint = ""
     if req.exclude:
         exclude_list = "\n".join(f"- {q}" for q in req.exclude[:20])
@@ -605,8 +622,8 @@ async def exercise_stream(req: ExerciseReq):
     
     lang_hint = f" in {req.language}" if req.language else ""
     if not lang_hint:
-        devanagari_count = sum(1 for c in context[:2000] if '\u0900' <= c <= '\u097f')
-        lang_hint = " Respond in Nepali (Devanagari script)." if devanagari_count > 20 else ""
+        lang = _detect_language(context)
+        lang_hint = " Respond in Nepali (Devanagari script)." if lang == "ne" else " Respond in English."
     exclude_hint = ""
     if req.exclude:
         exclude_list = "\n".join(f"- {q}" for q in req.exclude[:20])
@@ -649,9 +666,11 @@ async def chat(req: ChatReq):
         raise HTTPException(status_code=409, detail="No knowledge base built yet")
     
     context = "\n\n".join(d.get("content", "") for d in docs[:20])[:12000]
+    lang = _detect_language(context)
+    lang_hint = " Respond in Nepali (Devanagari script)." if lang == "ne" else " Respond in English."
     answer = await _llm_complete(
-        f"Based on this textbook content:\n{context}\n\nQuestion: {req.message}",
-        "You are a friendly study assistant for Nepali school students.",
+        f"Based on this textbook content:\n{context}\n\nQuestion: {req.message}{lang_hint}",
+        "You are a friendly study assistant for students. Always respond in the same language as the source content.",
         req.provider,
     )
     return {"answer": answer, "sources": []}
@@ -734,12 +753,12 @@ async def create_google_slides(req: NotebookReq):
 
 async def _stream_chat(docs: list, question: str, provider: str):
     context = "\n\n".join(d.get("content", "") for d in docs[:20])[:12000]
-    devanagari_count = sum(1 for c in context[:2000] if '\u0900' <= c <= '\u097f')
-    lang_hint = " Respond in the same language as the content (likely Nepali/Devanagari)." if devanagari_count > 20 else ""
+    lang = _detect_language(context)
+    lang_hint = " Respond in the same language as the content (Nepali/Devanagari)." if lang == "ne" else " Respond in English."
     prompt = f"Based on this textbook content:\n{context}\n\nQuestion: {question}\n\nAnswer concisely.{lang_hint}"
     async for event in _stream_llm(
         [{"role": "user", "content": prompt}],
-        "You are a friendly study assistant for Nepali school students.",
+        "You are a friendly study assistant for students. Always respond in the same language as the source content.",
         done_key="complete",
     ):
         yield event
@@ -775,8 +794,11 @@ async def _stream_llm(messages, system_prompt: str, done_key: str = "done"):
 
     mistral_key = os.environ.get("MISTRAL_API_KEY", "")
     groq_key = os.environ.get("GROQ_API_KEY", "")
+    openai_key = os.environ.get("OPENAI_API_KEY", "")
 
     providers = []
+    if openai_key:
+        providers.append(("https://api.openai.com/v1/chat/completions", openai_key, "gpt-4o-mini"))
     if groq_key:
         providers.append(("https://api.groq.com/openai/v1/chat/completions", groq_key, "openai/gpt-oss-20b"))
     if mistral_key:
@@ -867,22 +889,25 @@ async def _llm_complete(prompt: str, system: str, provider: str = "") -> str:
 
     mistral_key = os.environ.get("MISTRAL_API_KEY", "")
     groq_key = os.environ.get("GROQ_API_KEY", "")
+    openai_key = os.environ.get("OPENAI_API_KEY", "")
 
     providers = []
+    if openai_key:
+        providers.append(("https://api.openai.com/v1/chat/completions", openai_key, "gpt-4o-mini"))
     if "groq" in provider.lower() and groq_key:
-        providers = [("https://api.groq.com/openai/v1/chat/completions", groq_key, "openai/gpt-oss-20b")]
+        providers.append(("https://api.groq.com/openai/v1/chat/completions", groq_key, "openai/gpt-oss-20b"))
         if mistral_key:
             providers.append(("https://api.mistral.ai/v1/chat/completions", mistral_key, "mistral-large-latest"))
     elif "mistral" in provider.lower() and mistral_key:
-        providers = [("https://api.mistral.ai/v1/chat/completions", mistral_key, "mistral-large-latest")]
+        providers.append(("https://api.mistral.ai/v1/chat/completions", mistral_key, "mistral-large-latest"))
         if groq_key:
             providers.append(("https://api.groq.com/openai/v1/chat/completions", groq_key, "openai/gpt-oss-20b"))
     elif groq_key:
-        providers = [("https://api.groq.com/openai/v1/chat/completions", groq_key, "openai/gpt-oss-20b")]
+        providers.append(("https://api.groq.com/openai/v1/chat/completions", groq_key, "openai/gpt-oss-20b"))
         if mistral_key:
             providers.append(("https://api.mistral.ai/v1/chat/completions", mistral_key, "mistral-large-latest"))
     elif mistral_key:
-        providers = [("https://api.mistral.ai/v1/chat/completions", mistral_key, "mistral-large-latest")]
+        providers.append(("https://api.mistral.ai/v1/chat/completions", mistral_key, "mistral-large-latest"))
     else:
         return "No LLM API key configured."
 
@@ -897,6 +922,72 @@ async def _llm_complete(prompt: str, system: str, provider: str = "") -> str:
                     continue
                 break
     return "LLM rate limit exceeded. Please try again shortly."
+
+
+@app.post("/api/mindmap/expand")
+async def expand_mindmap_node(payload: dict):
+    """Generate sub-nodes for a specific mind map branch."""
+    class_num = payload.get("class_num", 7)
+    file = payload.get("file", "")
+    chapter = payload.get("chapter", "")
+    parent_label = payload.get("parent_label", "")
+    depth = payload.get("depth", 1)
+    exclude = payload.get("exclude", [])
+
+    # Get context from KB
+    context = ""
+    try:
+        kb_key = f"kb_{class_num}_{file}"
+        kb = _kb_store.get(kb_key)
+        if kb and kb.get("vectors"):
+            # Search for relevant content
+            results = _search_kb(kb, parent_label, top_k=5)
+            context = "\n\n".join([r.get("text", "") for r in results])
+    except Exception:
+        pass
+
+    if not context:
+        context = f"Topic: {parent_label}"
+
+    exclude_hint = ""
+    if exclude:
+        exclude_list = "\n".join(f"- {item[:60]}" for item in exclude[:20])
+        exclude_hint = f"\n\nDO NOT repeat these already-generated items:\n{exclude_list}"
+
+    prompt = f"""You are a knowledge-extraction AI. Generate 3-4 child nodes for the mind map topic: "{parent_label}"
+
+The parent topic is at depth {depth}. Generate child nodes that are more specific and detailed.
+
+Return ONLY valid JSON in this exact format:
+{{
+  "children": [
+    {{
+      "id": "unique-id",
+      "label": "Sub-topic Name",
+      "summary": "Brief 1-sentence summary",
+      "details": "Detailed explanation with key facts",
+      "sourceQuote": "Optional quote from the source material"
+    }}
+  ]
+}}
+
+{exclude_hint}
+
+Context from source material:
+{context[:8000]}
+
+Generate 3-4 child nodes:"""
+
+    provider = payload.get("provider", "groq")
+    result = await _llm_complete(prompt, "You are an educational content generator. Output valid JSON only.", provider)
+
+    try:
+        parsed = _try_parse_json(result)
+        if isinstance(parsed, dict) and "children" in parsed:
+            return parsed
+        return {"children": []}
+    except Exception:
+        return {"children": []}
 
 
 if __name__ == "__main__":
