@@ -71,7 +71,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-PROVIDERS = ["OpenAI (gpt-4o-mini)", "Groq (openai/gpt-oss-20b)", "Mistral (free)"]
+PROVIDERS = ["OpenCode Zen (minimax-m2.5-free, kimi-k2.5-free, minimax-m2.5, kimi-k2.5, qwen3-coder, big-pickle)", "Groq (openai/gpt-oss-20b)", "Mistral (free)"]
 
 _kb: Dict[str, Any] = {
     "built": False,
@@ -794,11 +794,17 @@ async def _stream_llm(messages, system_prompt: str, done_key: str = "done"):
 
     mistral_key = os.environ.get("MISTRAL_API_KEY", "")
     groq_key = os.environ.get("GROQ_API_KEY", "")
-    openai_key = os.environ.get("OPENAI_API_KEY", "")
+    opencode_key = os.environ.get("OPENCODE_API_KEY", "")
 
     providers = []
-    if openai_key:
-        providers.append(("https://api.openai.com/v1/chat/completions", openai_key, "gpt-4o-mini"))
+    if opencode_key:
+        # Free OpenCode Zen models
+        providers.append(("https://opencode.ai/zen/v1/chat/completions", opencode_key, "minimax-m2.5-free"))
+        providers.append(("https://opencode.ai/zen/v1/chat/completions", opencode_key, "kimi-k2.5-free"))
+        providers.append(("https://opencode.ai/zen/v1/chat/completions", opencode_key, "minimax-m2.5"))
+        providers.append(("https://opencode.ai/zen/v1/chat/completions", opencode_key, "kimi-k2.5"))
+        providers.append(("https://opencode.ai/zen/v1/chat/completions", opencode_key, "qwen3-coder"))
+        providers.append(("https://opencode.ai/zen/v1/chat/completions", opencode_key, "big-pickle"))
     if groq_key:
         providers.append(("https://api.groq.com/openai/v1/chat/completions", groq_key, "openai/gpt-oss-20b"))
     if mistral_key:
@@ -889,11 +895,16 @@ async def _llm_complete(prompt: str, system: str, provider: str = "") -> str:
 
     mistral_key = os.environ.get("MISTRAL_API_KEY", "")
     groq_key = os.environ.get("GROQ_API_KEY", "")
-    openai_key = os.environ.get("OPENAI_API_KEY", "")
+    opencode_key = os.environ.get("OPENCODE_API_KEY", "")
 
     providers = []
-    if openai_key:
-        providers.append(("https://api.openai.com/v1/chat/completions", openai_key, "gpt-4o-mini"))
+    if opencode_key:
+        providers.append(("https://opencode.ai/zen/v1/chat/completions", opencode_key, "minimax-m2.5-free"))
+        providers.append(("https://opencode.ai/zen/v1/chat/completions", opencode_key, "kimi-k2.5-free"))
+        providers.append(("https://opencode.ai/zen/v1/chat/completions", opencode_key, "minimax-m2.5"))
+        providers.append(("https://opencode.ai/zen/v1/chat/completions", opencode_key, "kimi-k2.5"))
+        providers.append(("https://opencode.ai/zen/v1/chat/completions", opencode_key, "qwen3-coder"))
+        providers.append(("https://opencode.ai/zen/v1/chat/completions", opencode_key, "big-pickle"))
     if "groq" in provider.lower() and groq_key:
         providers.append(("https://api.groq.com/openai/v1/chat/completions", groq_key, "openai/gpt-oss-20b"))
         if mistral_key:
